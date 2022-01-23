@@ -147,7 +147,7 @@ func (c *Choice) String() string {
 	return b.String()
 }
 
-func (c *Choice) Guess() string {
+func (c *Choice) Guess(prev []string) string {
 	return c.W
 }
 
