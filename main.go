@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 )
 
 func LoadStrategy(name string) (*Choice, error) {
@@ -88,7 +89,7 @@ func Play(c *Choice, target string, valid func(string, []wordResult) bool) (int,
 	}
 }
 
-func main() {
+func checkStrats() {
 	for hard := 0; hard <= 2; hard++ {
 		validf := ValidGuessNormal
 		if hard >= 1 {
@@ -110,4 +111,62 @@ func main() {
 		mean := float64(sum) / float64(len(Answers))
 		fmt.Printf("%-11s sum=%d mean=%.4f\n", harddesc+":", sum, mean)
 	}
+}
+
+func sim(a, b map[Result]bool) (int, int) {
+	i := 0
+	u := 0
+	for x := range a {
+		if b[x] {
+			u++
+			i++
+		} else {
+			u++
+		}
+	}
+	for x := range b {
+		if !a[x] {
+			u++
+		}
+	}
+	return i, u
+}
+
+func answerSets() {
+	worst, worstScore := "ZZZZ", 100000
+	gots := map[string]map[Result]bool{}
+	for _, target := range Answers {
+		got := map[Result]bool{}
+		for _, guess := range AllWords {
+			got[Score(target, guess)] = true
+		}
+		if len(got) < worstScore {
+			worst, worstScore = target, len(got)
+		}
+		gots[target] = got
+	}
+	fmt.Println("worst:", worst, worstScore)
+	type wwiu struct {
+		w1, w2 string
+		i, u   int
+	}
+	all := []wwiu{}
+	for i := range Answers {
+		for j := i + 1; j < len(Answers); j++ {
+			i, u := sim(gots[Answers[i]], gots[Answers[j]])
+			all = append(all, wwiu{Answers[i], Answers[j], i, u})
+		}
+	}
+	sort.Slice(all, func(i, j int) bool {
+		s1 := float64(all[i].i) / float64(all[i].u)
+		s2 := float64(all[j].i) / float64(all[j].u)
+		return s1 > s2
+	})
+	for i := 0; i < 10; i++ {
+		fmt.Println(all[i])
+	}
+}
+
+func main() {
+	checkStrats()
 }
