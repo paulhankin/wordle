@@ -167,6 +167,42 @@ func answerSets() {
 	}
 }
 
+func mprs(s string) Result {
+	r, err := ResultFromString(s)
+	if err != nil {
+		panic(err)
+	}
+	return r
+}
+
+func mustParseResults(s ...string) []Result {
+	var r []Result
+	for _, x := range s {
+		r = append(r, mprs(x))
+	}
+	return r
+}
+
+func findAnswer(wants []Result) {
+	for _, target := range Answers {
+		got := map[Result]bool{}
+		for _, guess := range AllWords {
+			got[Score(target, guess)] = true
+		}
+		ok := true
+		for _, w := range wants {
+			if !got[w] {
+				ok = false
+				break
+			}
+		}
+		if ok {
+			fmt.Println(target)
+		}
+	}
+}
+
 func main() {
 	checkStrats()
+	// answerSets()
 }
