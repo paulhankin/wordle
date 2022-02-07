@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"log"
+	"math/bits"
 	"os"
 	"sort"
+	"strings"
 )
 
 func LoadStrategy(name string) (*Choice, error) {
@@ -202,7 +204,60 @@ func findAnswer(wants []Result) {
 	}
 }
 
+var allWords = []string{
+	"bemix", "bling", "blunk", "brick", "brung", "chunk", "cimex", "clipt", "clunk", "cylix", "fjord", "glent", "grypt", "gucks", "gymps", "jumby", "jumpy", "kempt", "kreng", "nymph", "pling", "prick", "treck", "vibex", "vozhd", "waltz", "waqfs", "xylic",
+}
+
+func printSol(res []uint32, masks map[uint32][]string) {
+	var b strings.Builder
+	for i, r := range res {
+		if i > 0 {
+			b.WriteString(" ")
+		}
+		b.WriteString(strings.Join(masks[r], "|"))
+	}
+	fmt.Println(b.String())
+}
+
+func find5(w []uint32, mask uint32, n int, res []uint32, masks map[uint32][]string) {
+	if n == 5 {
+		printSol(res, masks)
+		return
+	}
+	sub := []uint32{}
+	for _, x := range w {
+		if x&mask != 0 {
+			continue
+		}
+		sub = append(sub, x)
+	}
+	for i, x := range sub {
+		res[n] = x
+		find5(sub[i+1:], mask|x, n+1, res, masks)
+	}
+}
+
+func find5clique() {
+	masks := map[uint32][]string{}
+	for _, x := range allWords {
+		m := uint32(0)
+		for _, c := range x {
+			m |= 1 << (c - 'a')
+		}
+		if bits.OnesCount32(m) == 5 {
+			masks[m] = append(masks[m], x)
+		}
+	}
+	maskSlice := []uint32{}
+	for m := range masks {
+		maskSlice = append(maskSlice, m)
+	}
+	sort.Slice(maskSlice, func(i, j int) bool {
+		return maskSlice[i] < maskSlice[j]
+	})
+	find5(maskSlice, uint32(0), 0, make([]uint32, 5, 5), masks)
+}
+
 func main() {
 	checkStrats()
-	// answerSets()
 }
